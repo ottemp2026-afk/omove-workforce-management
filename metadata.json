@@ -1,0 +1,6 @@
+{
+  "name": "Biometric Attendance System",
+  "description": "Professional company employee biometric attendance, shift scheduling, and overtime management system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

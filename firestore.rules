@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/admin/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admin/$(request.auth.uid)).data.role == 'admin' &&
+        get(/databases/$(database)/documents/admin/$(request.auth.uid)).data.active == true;
+    }
+
+    // Employees Collection
+    match /employees/{employeeId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Shifts Collection
+    match /shifts/{shiftId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Attendance Collection
+    match /attendance/{attendanceId} {
+      allow read: if true;
+      allow create, update: if true; // Allows biometric terminal scan & simulation
+      allow delete: if isAdmin();
+    }
+
+    // Admin Access Control Collection
+    match /admin/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

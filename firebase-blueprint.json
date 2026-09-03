@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee workforce profile and biometric fingerprint slot binding",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "department": { "type": "string" },
+        "designation": { "type": "string" },
+        "joiningDate": { "type": "string" },
+        "shiftId": { "type": "string" },
+        "fingerprintId": { "type": "number" },
+        "active": { "type": "boolean" },
+        "overtimeRate": { "type": "number" }
+      },
+      "required": [
+        "employeeId",
+        "name",
+        "fingerprintId",
+        "shiftId",
+        "active",
+        "overtimeRate"
+      ]
+    },
+    "Shift": {
+      "title": "Shift",
+      "description": "Company work shift configuration and duration parameters",
+      "type": "object",
+      "properties": {
+        "shiftId": { "type": "string" },
+        "name": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "normalHours": { "type": "number" }
+      },
+      "required": [
+        "shiftId",
+        "name",
+        "startTime",
+        "endTime",
+        "normalHours"
+      ]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Biometric attendance punch record with regular hours and complete 1-hour overtime calculations",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "fingerprintId": { "type": "number" },
+        "date": { "type": "string" },
+        "inTime": { "type": "string" },
+        "outTime": { "type": "string" },
+        "regularHours": { "type": "number" },
+        "overtimeHours": { "type": "number" },
+        "overtimeRate": { "type": "number" },
+        "overtimeAmount": { "type": "number" },
+        "shiftId": { "type": "string" },
+        "deviceId": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": [
+        "employeeId",
+        "employeeName",
+        "fingerprintId",
+        "date",
+        "inTime",
+        "shiftId",
+        "deviceId",
+        "status"
+      ]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized administrator user credentials and access verification document",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": [
+        "email",
+        "name",
+        "role",
+        "active"
+      ]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Workforce employee registry documents"
+    },
+    "/shifts/{shiftId}": {
+      "schema": "Shift",
+      "description": "Configured shift window definitions"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Biometric scan attendance records"
+    },
+    "/admin/{uid}": {
+      "schema": "Admin",
+      "description": "Admin access control documents keyed by Firebase Auth UID"
+    }
+  }
+}
