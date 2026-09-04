@@ -188,7 +188,17 @@ export function getElapsedWorkTime(
   otPay: number;
   totalWorkedMinutes: number;
 } {
-  const elapsedSeconds = Math.max(0, Math.floor((nowTimestamp - inTimestamp) / 1000));
+  // Sanity check: If inTimestamp is in the future compared to nowTimestamp (e.g. UTC+5:30 offset issue), correct it
+  let validInTs = inTimestamp;
+  if (validInTs > nowTimestamp + 30000) {
+    if (validInTs - nowTimestamp >= 19000000 && validInTs - nowTimestamp <= 20500000) {
+      validInTs -= 19800000;
+    } else {
+      validInTs = nowTimestamp;
+    }
+  }
+
+  const elapsedSeconds = Math.max(0, Math.floor((nowTimestamp - validInTs) / 1000));
   const formattedWorked = formatSecondsToHMS(elapsedSeconds);
   const totalWorkedMinutes = Math.floor(elapsedSeconds / 60);
 

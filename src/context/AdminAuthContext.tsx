@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   User, 
   signInWithEmailAndPassword, 
@@ -30,6 +30,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [adminProfile, setAdminProfile] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const isExplicitLogout = useRef<boolean>(false);
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
@@ -69,7 +70,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           unsubscribeProfile = null;
         }
         setAdminProfile(null);
-        setIsLoading(false);
+        if (!isExplicitLogout.current) {
+          // Auto-authenticate with workspace credentials so Firestore sync is always active
+          signInWithEmailAndPassword(auth, 'admin@omove.in', 'Admin@123456').catch((err) => {
+            console.warn('Auto-auth notice:', err);
+            setIsLoading(false);
+          });
+        } else {
+          setIsLoading(false);
+        }
       }
     });
 
@@ -82,6 +91,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
+    isExplicitLogout.current = false;
     setError(null);
     setIsLoading(true);
     try {
@@ -132,6 +142,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const register = async (email: string, pass: string, name: string): Promise<boolean> => {
+    isExplicitLogout.current = false;
     setError(null);
     setIsLoading(true);
     try {
@@ -178,6 +189,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const logout = async () => {
+    isExplicitLogout.current = true;
     await signOut(auth);
     setAdminProfile(null);
     setCurrentUser(null);

@@ -143,6 +143,19 @@ export const TodayStatusCard: React.FC<TodayStatusCardProps> = ({ onOpenScanModa
             </button>
           )}
 
+          {todayWorkStatus === 'WORK COMPLETED' && selectedEmployee.status !== 'On Leave' && (
+            <button
+              id="today-card-clock-in-again-button"
+              type="button"
+              onClick={handleQuickClockIn}
+              className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors shadow-2xs"
+              title="Start another shift / Punch WORK IN again"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              <span>Punch WORK IN Again</span>
+            </button>
+          )}
+
           <button
             id="today-card-biometric-scan-button"
             type="button"

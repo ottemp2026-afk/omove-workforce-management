@@ -18,7 +18,11 @@ export const EmployeePortal: React.FC<EmployeePortalProps> = ({ navigate, onOpen
   // Filter this employee's recent attendance
   const recentRecords = selectedEmployee
     ? attendanceRecords
-        .filter(r => r.employeeId === selectedEmployee.id || r.employeeId === selectedEmployee.employeeId)
+        .filter(r => 
+          r.employeeId === selectedEmployee.id || 
+          r.employeeId === selectedEmployee.employeeId ||
+          (selectedEmployee.fingerprintId && Number(r.fingerprintId) === Number(selectedEmployee.fingerprintId))
+        )
         .slice(0, 5)
     : [];
 

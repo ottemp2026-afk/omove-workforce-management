@@ -26,7 +26,10 @@ export const EmployeeAttendance: React.FC<EmployeeAttendanceProps> = () => {
 
   // Employee-specific records
   const myRecords = attendanceRecords.filter(
-    r => r.employeeId === selectedEmployee.id || r.employeeId === selectedEmployee.employeeId
+    r => 
+      r.employeeId === selectedEmployee.id || 
+      r.employeeId === selectedEmployee.employeeId ||
+      (selectedEmployee.fingerprintId && Number(r.fingerprintId) === Number(selectedEmployee.fingerprintId))
   );
 
   // Computed metrics for this employee

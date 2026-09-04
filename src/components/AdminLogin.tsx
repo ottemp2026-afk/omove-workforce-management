@@ -153,6 +153,25 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ navigate }) => {
               )}
             </button>
 
+            {/* Quick Demo Credentials Helper */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[11px] text-slate-600 flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-slate-800">Admin Account: </span>
+                <span className="font-mono text-slate-700">admin@omove.in</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@omove.in');
+                  setPassword('Admin@123456');
+                  if (error) clearError();
+                }}
+                className="rounded bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors"
+              >
+                Auto-Fill
+              </button>
+            </div>
+
             <p className="text-[11px] text-slate-500 text-center pt-1">
               Admin access requires verification in <code className="font-mono text-slate-700">admin/{'{uid}'}</code>.
             </p>

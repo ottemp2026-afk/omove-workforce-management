@@ -9,7 +9,7 @@ interface BiometricScanModalProps {
 }
 
 export const BiometricScanModal: React.FC<BiometricScanModalProps> = ({ isOpen, onClose }) => {
-  const { employees, attendanceRecords, simulateBiometricScan } = useAttendance();
+  const { employees, attendanceRecords, simulateBiometricScan, setSelectedEmployeeId } = useAttendance();
   const [selectedEmpId, setSelectedEmpId] = useState<string>('');
   const [action, setAction] = useState<'WORK IN' | 'WORK OUT'>('WORK IN');
   const [isScanning, setIsScanning] = useState<boolean>(false);
@@ -66,6 +66,7 @@ export const BiometricScanModal: React.FC<BiometricScanModalProps> = ({ isOpen, 
 
     try {
       await simulateBiometricScan(selectedEmp.fingerprintId, action);
+      setSelectedEmployeeId(selectedEmp.id);
       setIsScanning(false);
       setScanResult({
         name: selectedEmp.name,

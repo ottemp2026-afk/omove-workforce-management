@@ -19,7 +19,8 @@ import {
   computeMinutesBetweenTimes,
   parseDateTimeToTimestamp,
 } from '../utils/overtime';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { 
   collection, 
   doc, 
@@ -54,6 +55,7 @@ interface AttendanceContextType {
   liveLogs: LiveBiometricActivity[];
   hardware: HardwareStatus;
   isFirebaseConnected: boolean;
+  firestoreError: string | null;
   
   // Actions
   addEmployee: (emp: Omit<Employee, 'id'>) => Promise<void>;
@@ -99,6 +101,16 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('EMP001');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(auth.currentUser);
+
+  // Re-sync with Firebase Auth state so listeners refresh when admin logs in
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user);
+    });
+    return () => unsub();
+  }, []);
 
   // Scan cooldown tracker (30 seconds per employee)
   const lastScanTimes = useRef<Record<string, number>>({});
@@ -131,6 +143,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const shiftsCol = collection(db, 'shifts');
       const unsubscribe = onSnapshot(shiftsCol, (snapshot) => {
         setIsFirebaseConnected(true);
+        setFirestoreError(null);
         if (!snapshot.empty) {
           const loadedShifts: Shift[] = snapshot.docs.map((d) => {
             const data = d.data();
@@ -148,29 +161,34 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           });
           setShifts(loadedShifts);
         } else {
-          // If empty in Firestore, initialize standard SHIFT-A, SHIFT-B, SHIFT-C
-          INITIAL_SHIFTS.forEach(async (initShift) => {
-            try {
-              await setDoc(doc(db, 'shifts', initShift.id), {
-                shiftId: initShift.id,
-                name: initShift.name,
-                startTime: initShift.startTime,
-                endTime: initShift.endTime,
-                normalHours: 8,
-              });
-            } catch {
-              // Ignore if already set
-            }
-          });
+          // If empty in Firestore and user is authenticated, initialize standard SHIFT-A, SHIFT-B, SHIFT-C
+          if (auth.currentUser) {
+            INITIAL_SHIFTS.forEach(async (initShift) => {
+              try {
+                await setDoc(doc(db, 'shifts', initShift.id), {
+                  shiftId: initShift.id,
+                  name: initShift.name,
+                  startTime: initShift.startTime,
+                  endTime: initShift.endTime,
+                  normalHours: 8,
+                });
+              } catch {
+                // Ignore if already set
+              }
+            });
+          }
         }
       }, (err) => {
         console.warn('Firestore shifts listener note:', err.message);
+        if (err.message.includes('insufficient permissions')) {
+          setFirestoreError('Firestore permission notice: Please sign in as Admin to access database.');
+        }
       });
       return () => unsubscribe();
     } catch (e) {
       console.warn('Firestore shifts init error:', e);
     }
-  }, []);
+  }, [authUser]);
 
   // 2. Subscribe to Firestore `employees` collection (SINGLE SOURCE OF TRUTH)
   useEffect(() => {
@@ -178,6 +196,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const employeesCol = collection(db, 'employees');
       const unsubscribe = onSnapshot(employeesCol, (snapshot) => {
         setIsFirebaseConnected(true);
+        setFirestoreError(null);
         if (!snapshot.empty) {
           const loadedEmployees: Employee[] = snapshot.docs.map((d) => {
             const data = d.data();
@@ -225,12 +244,16 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }, (err) => {
         console.warn('Firestore employees listener note:', err.message);
+        if (err.message.includes('insufficient permissions')) {
+          setFirestoreError('Firestore permission notice: Please sign in as Admin to access database.');
+          setIsFirebaseConnected(false);
+        }
       });
       return () => unsubscribe();
     } catch (e) {
       console.warn('Firestore employees init error:', e);
     }
-  }, []);
+  }, [authUser]);
 
   // 3. Subscribe to Firestore `attendance` collection
   useEffect(() => {
@@ -238,10 +261,14 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const attendanceCol = collection(db, 'attendance');
       const unsubscribe = onSnapshot(attendanceCol, (snapshot) => {
         setIsFirebaseConnected(true);
+        setFirestoreError(null);
         if (!snapshot.empty) {
           const loadedRecords: AttendanceRecord[] = snapshot.docs.map((d) => {
             const data = d.data();
-            const inTs = data.inTimestamp || parseDateTimeToTimestamp(data.date, data.inTime);
+            let inTs = typeof data.inTimestamp === 'number' ? data.inTimestamp : Number(data.inTimestamp);
+            if (!inTs || isNaN(inTs) || inTs > Date.now() + 60000) {
+              inTs = parseDateTimeToTimestamp(data.date, data.inTime);
+            }
             
             // Format workHours and overtime display strings
             let workHoursStr = data.workHours;
@@ -309,12 +336,16 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }, (err) => {
         console.warn('Firestore attendance listener note:', err.message);
+        if (err.message.includes('insufficient permissions')) {
+          setFirestoreError('Firestore permission notice: Please sign in as Admin to access database.');
+          setIsFirebaseConnected(false);
+        }
       });
       return () => unsubscribe();
     } catch (e) {
       console.warn('Firestore attendance init error:', e);
     }
-  }, []);
+  }, [authUser]);
 
   // Synchronize selected employee ID when employees list loads
   useEffect(() => {
@@ -366,11 +397,18 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // 1. Check if an active 'Working' attendance record exists in Firestore attendance collection
     const activeWorkingRecord = attendanceRecords.find(
-      r => (r.employeeId === empId || r.employeeId === selectedEmployee.id) && r.status === 'Working'
+      r => (
+        r.employeeId === empId || 
+        r.employeeId === selectedEmployee.id || 
+        (selectedEmployee.fingerprintId && Number(r.fingerprintId) === Number(selectedEmployee.fingerprintId))
+      ) && r.status === 'Working'
     );
 
     if (activeWorkingRecord) {
-      const inTs = activeWorkingRecord.inTimestamp || parseDateTimeToTimestamp(activeWorkingRecord.date, activeWorkingRecord.inTime);
+      let inTs = activeWorkingRecord.inTimestamp;
+      if (!inTs || isNaN(inTs) || inTs > Date.now() + 60000) {
+        inTs = parseDateTimeToTimestamp(activeWorkingRecord.date, activeWorkingRecord.inTime);
+      }
       return {
         todayWorkStatus: 'WORKING' as WorkStatus,
         todayInTime: activeWorkingRecord.inTime,
@@ -386,9 +424,13 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // 2. Check if a completed record exists for today or recent shift
     const todayDate = getTodayDateStr();
     const todayCompletedRecord = attendanceRecords.find(
-      r => (r.employeeId === empId || r.employeeId === selectedEmployee.id) && 
-           r.status === 'Completed' && 
-           (r.date === todayDate || (r.inTimestamp && Date.now() - r.inTimestamp < 24 * 3600 * 1000))
+      r => (
+        r.employeeId === empId || 
+        r.employeeId === selectedEmployee.id || 
+        (selectedEmployee.fingerprintId && Number(r.fingerprintId) === Number(selectedEmployee.fingerprintId))
+      ) && 
+      r.status === 'Completed' && 
+      (r.date === todayDate || (r.inTimestamp && Date.now() - r.inTimestamp < 24 * 3600 * 1000))
     );
 
     if (todayCompletedRecord) {
@@ -595,6 +637,9 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     const empId = emp.employeeId || emp.id;
+    // Auto-switch view to the employee whose attendance is being recorded
+    setSelectedEmployeeId(emp.id);
+
     const now = new Date();
     const nowTs = now.getTime();
 
@@ -761,6 +806,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         liveLogs,
         hardware,
         isFirebaseConnected,
+        firestoreError,
         addEmployee,
         updateEmployee,
         deleteEmployee,

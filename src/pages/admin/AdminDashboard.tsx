@@ -11,7 +11,9 @@ import {
   Fingerprint,
   UserPlus,
   Download,
-  CalendarCheck
+  CalendarCheck,
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { AppRoute } from '../../types';
 import { parseDurationToMinutes, formatMinutesToHoursMinutes } from '../../utils/overtime';
@@ -22,7 +24,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate, onOpenScanModal }) => {
-  const { employees, shifts, attendanceRecords } = useAttendance();
+  const { employees, shifts, attendanceRecords, isFirebaseConnected, firestoreError } = useAttendance();
 
   // 1. Total Employees (from Firestore employees collection)
   const totalEmployees = employees.length;
@@ -84,9 +86,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate, onOpen
       {/* Top Welcome & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Workforce Overview
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Workforce Overview
+            </h1>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+              isFirebaseConnected 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isFirebaseConnected ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+              {isFirebaseConnected ? 'Firestore Synced' : 'Syncing Firestore'}
+            </span>
+          </div>
           <p className="mt-1 text-xs sm:text-sm text-slate-500">
             Real-time biometric attendance metrics, active shifts, and Firestore synchronizations
           </p>
@@ -123,6 +135,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ navigate, onOpen
           </button>
         </div>
       </div>
+
+      {/* Sync / Permission Notice Banner */}
+      {firestoreError && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-950">Firebase Sync Notice</p>
+            <p className="mt-0.5 text-slate-700 leading-relaxed">
+              {firestoreError}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Top Statistics Grid - Directly matching Section 16 */}
       <div>

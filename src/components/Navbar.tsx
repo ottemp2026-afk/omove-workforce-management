@@ -10,7 +10,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentRoute, navigate, onOpenScanModal }) => {
-  const { hardware, selectedEmployee, employees, setSelectedEmployeeId } = useAttendance();
+  const { hardware, selectedEmployee, employees, setSelectedEmployeeId, isFirebaseConnected, firestoreError } = useAttendance();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [employeeSwitcherOpen, setEmployeeSwitcherOpen] = useState(false);
 
@@ -87,14 +87,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRoute, navigate, onOpenSc
 
         {/* Right Controls */}
         <div className="hidden md:flex md:items-center md:gap-2.5">
-          {/* System Online Status */}
+          {/* Firestore Status */}
           <div
             id="system-status-indicator"
             className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
-            title={`Hardware: ESP32 ${hardware.esp32}, Sensor ${hardware.r307s}, RTC ${hardware.ds3231Rtc}`}
+            title={isFirebaseConnected ? 'Firebase Firestore connected and synced.' : firestoreError || 'Connecting to Firebase Firestore...'}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-            <span className="font-medium text-[11px]">System Online</span>
+            <span className={`h-1.5 w-1.5 rounded-full ${isFirebaseConnected ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+            <span className="font-medium text-[11px]">
+              {isFirebaseConnected ? 'Firestore Synced' : 'Firestore Syncing'}
+            </span>
           </div>
 
           {/* Quick Hardware Scan Button */}
