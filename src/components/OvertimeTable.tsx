@@ -1,10 +1,29 @@
 import React, { useState, useMemo } from 'react';
 import { AttendanceRecord } from '../types';
-import { Search, Download, Clock, DollarSign, Calendar, Users, Filter } from 'lucide-react';
+import { 
+  Search, 
+  Download, 
+  Clock, 
+  DollarSign, 
+  Calendar, 
+  Users, 
+  Filter,
+  User,
+  Briefcase,
+  LogIn,
+  LogOut,
+  Zap,
+  IndianRupee,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
 
 interface OvertimeTableProps {
   records: AttendanceRecord[];
 }
+
+type OtSortField = 'employee' | 'date' | 'shift' | 'in' | 'out' | 'hours' | 'otHours' | 'otRate' | 'otAmount';
 
 export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +31,22 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
   const [shiftFilter, setShiftFilter] = useState('ALL');
   const [empFilter, setEmpFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState('ALL');
+  const [sortField, setSortField] = useState<OtSortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: OtSortField) => {
+    if (sortField === field) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // Distinct values for filter dropdowns
   const departments = useMemo(() => Array.from(new Set(records.map(r => r.department).filter(Boolean))), [records]);
@@ -28,7 +63,7 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
   const dates = useMemo(() => Array.from(new Set(records.map(r => r.date).filter(Boolean))), [records]);
 
   // Filter records that have overtime (>0 otHours or >0 otAmount)
-  const overtimeRecords = useMemo(() => {
+  const filteredOvertimeRecords = useMemo(() => {
     return records
       .filter(r => {
         const otVal = typeof r.overtimeHours === 'number' ? r.overtimeHours : (parseInt(String(r.overtimeHours || '0'), 10) || 0);
@@ -49,6 +84,55 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
         return matchesSearch && matchesDept && matchesShift && matchesEmp && matchesDate;
       });
   }, [records, searchTerm, deptFilter, shiftFilter, empFilter, dateFilter]);
+
+  const overtimeRecords = useMemo(() => {
+    if (!sortField) return filteredOvertimeRecords;
+    return [...filteredOvertimeRecords].sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      switch (sortField) {
+        case 'employee':
+          valA = a.employeeName || '';
+          valB = b.employeeName || '';
+          break;
+        case 'date':
+          valA = a.date || '';
+          valB = b.date || '';
+          break;
+        case 'shift':
+          valA = a.shift || '';
+          valB = b.shift || '';
+          break;
+        case 'in':
+          valA = a.inTime || '';
+          valB = b.inTime || '';
+          break;
+        case 'out':
+          valA = a.outTime || '';
+          valB = b.outTime || '';
+          break;
+        case 'hours':
+          valA = a.workHours || '';
+          valB = b.workHours || '';
+          break;
+        case 'otHours':
+          valA = typeof a.overtimeHours === 'number' ? a.overtimeHours : parseInt(String(a.overtimeHours || 0), 10);
+          valB = typeof b.overtimeHours === 'number' ? b.overtimeHours : parseInt(String(b.overtimeHours || 0), 10);
+          break;
+        case 'otRate':
+          valA = a.overtimeRate || a.otRate || 80;
+          valB = b.overtimeRate || b.otRate || 80;
+          break;
+        case 'otAmount':
+          valA = a.overtimeAmount || a.otAmount || 0;
+          valB = b.overtimeAmount || b.otAmount || 0;
+          break;
+      }
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredOvertimeRecords, sortField, sortDirection]);
 
   // Totals calculated strictly from real attendance data
   const totalOvertimeAmount = overtimeRecords.reduce((sum, r) => sum + (r.overtimeAmount || r.otAmount || 0), 0);
@@ -86,24 +170,28 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
   return (
     <div
       id="overtime-table-container"
-      className="rounded-md border border-slate-200 bg-white overflow-hidden"
+      className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-xs"
     >
-      {/* Filters Toolbar - Employee, Date, Department, Shift (Section 20) */}
-      <div className="border-b border-slate-200/80 p-3 sm:p-4 space-y-3">
+      {/* Filters Toolbar */}
+      <div className="border-b border-slate-200/80 p-4 space-y-3 bg-gradient-to-b from-white to-slate-50/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-600" />
-            <h3 className="text-sm font-bold text-slate-900">Overtime Ledger</h3>
-            <span className="text-xs text-slate-500 font-medium">
-              ({overtimeRecords.length} qualifying entries • Total: ₹{totalOvertimeAmount.toFixed(0)})
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 border border-amber-500/20">
+              <Clock className="h-4 w-4" />
             </span>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">Overtime Ledger</h3>
+              <p className="text-xs text-slate-500 font-medium">
+                {overtimeRecords.length} qualifying entries • Total Payout: <span className="font-bold text-slate-900">₹{totalOvertimeAmount.toFixed(0)}</span>
+              </p>
+            </div>
           </div>
 
           <button
             id="overtime-export-csv-btn"
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all self-start sm:self-auto shadow-2xs"
           >
             <Download className="h-3.5 w-3.5 text-slate-500" />
             <span>Export OT Report</span>
@@ -114,14 +202,14 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
           {/* Search */}
           <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               id="overtime-search-input"
               type="text"
               placeholder="Search..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-slate-50/50 py-1.5 pl-8 pr-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-hidden"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 focus:outline-hidden transition-all shadow-2xs"
             />
           </div>
 
@@ -130,7 +218,7 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
             id="overtime-emp-filter"
             value={empFilter}
             onChange={e => setEmpFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/50 py-1.5 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:bg-white focus:outline-hidden cursor-pointer"
+            className="rounded-lg border border-slate-200 bg-white py-2 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 focus:outline-hidden transition-all shadow-2xs cursor-pointer"
           >
             <option value="ALL">All Employees</option>
             {employees.map(([id, name]) => (
@@ -145,7 +233,7 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
             id="overtime-dept-filter"
             value={deptFilter}
             onChange={e => setDeptFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/50 py-1.5 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:bg-white focus:outline-hidden cursor-pointer"
+            className="rounded-lg border border-slate-200 bg-white py-2 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 focus:outline-hidden transition-all shadow-2xs cursor-pointer"
           >
             <option value="ALL">All Departments</option>
             {departments.map(d => (
@@ -160,7 +248,7 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
             id="overtime-shift-filter"
             value={shiftFilter}
             onChange={e => setShiftFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/50 py-1.5 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:bg-white focus:outline-hidden cursor-pointer"
+            className="rounded-lg border border-slate-200 bg-white py-2 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 focus:outline-hidden transition-all shadow-2xs cursor-pointer"
           >
             <option value="ALL">All Shifts</option>
             {shifts.map(s => (
@@ -175,7 +263,7 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
             id="overtime-date-filter"
             value={dateFilter}
             onChange={e => setDateFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/50 py-1.5 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:bg-white focus:outline-hidden cursor-pointer"
+            className="rounded-lg border border-slate-200 bg-white py-2 px-2.5 text-xs font-medium text-slate-700 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 focus:outline-hidden transition-all shadow-2xs cursor-pointer"
           >
             <option value="ALL">All Dates</option>
             {dates.map(d => (
@@ -191,16 +279,152 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              <th className="px-4 py-2.5">Employee</th>
-              <th className="px-4 py-2.5">Date</th>
-              <th className="px-4 py-2.5">Shift</th>
-              <th className="px-4 py-2.5">IN</th>
-              <th className="px-4 py-2.5">OUT</th>
-              <th className="px-4 py-2.5">Worked Hours</th>
-              <th className="px-4 py-2.5">OT Hours</th>
-              <th className="px-4 py-2.5">OT Rate</th>
-              <th className="px-4 py-2.5 text-right">OT Amount</th>
+            <tr className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 text-slate-200 border-b-2 border-slate-800 text-[11px] font-bold uppercase tracking-wider select-none">
+              <th 
+                onClick={() => handleSort('employee')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Employee"
+              >
+                <div className="flex items-center gap-2 text-slate-200">
+                  <User className="h-3.5 w-3.5 text-slate-400 group-hover:text-white transition-colors" />
+                  <span className="tracking-widest">EMPLOYEE</span>
+                  {sortField === 'employee' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-400" /> : <ArrowDown className="h-3 w-3 text-emerald-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('date')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Date"
+              >
+                <div className="flex items-center gap-2 text-slate-200">
+                  <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-white transition-colors" />
+                  <span className="tracking-widest">DATE</span>
+                  {sortField === 'date' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-400" /> : <ArrowDown className="h-3 w-3 text-emerald-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('shift')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Shift"
+              >
+                <div className="flex items-center gap-2 text-slate-200">
+                  <Briefcase className="h-3.5 w-3.5 text-slate-400 group-hover:text-white transition-colors" />
+                  <span className="tracking-widest">SHIFT</span>
+                  {sortField === 'shift' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-400" /> : <ArrowDown className="h-3 w-3 text-emerald-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('in')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Punch IN"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                    <LogIn className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-emerald-400 tracking-widest">IN</span>
+                  {sortField === 'in' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-400" /> : <ArrowDown className="h-3 w-3 text-emerald-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('out')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Punch OUT"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-500/20 text-rose-400">
+                    <LogOut className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-rose-400 tracking-widest">OUT</span>
+                  {sortField === 'out' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-rose-400" /> : <ArrowDown className="h-3 w-3 text-rose-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('hours')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Worked Hours"
+              >
+                <div className="flex items-center gap-2 text-slate-200">
+                  <Clock className="h-3.5 w-3.5 text-indigo-300 group-hover:text-white transition-colors" />
+                  <span className="tracking-widest">WORKED HOURS</span>
+                  {sortField === 'hours' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-indigo-400" /> : <ArrowDown className="h-3 w-3 text-indigo-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('otHours')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by OT Hours"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
+                    <Zap className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-amber-400 tracking-widest">OT HOURS</span>
+                  {sortField === 'otHours' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-amber-400" /> : <ArrowDown className="h-3 w-3 text-amber-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('otRate')}
+                className="px-4 py-3.5 cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Rate"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-slate-300">
+                    <IndianRupee className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-slate-200 tracking-widest">OT RATE</span>
+                  {sortField === 'otRate' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-slate-100" /> : <ArrowDown className="h-3 w-3 text-slate-100" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort('otAmount')}
+                className="px-4 py-3.5 text-right cursor-pointer hover:bg-slate-800/80 transition-colors whitespace-nowrap group"
+                title="Click to sort by Payout Amount"
+              >
+                <div className="flex items-center justify-end gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                    <IndianRupee className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-emerald-400 tracking-widest">OT AMOUNT</span>
+                  {sortField === 'otAmount' ? (
+                    sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-emerald-400" /> : <ArrowDown className="h-3 w-3 text-emerald-400" />
+                  ) : (
+                    <ArrowUpDown className="h-2.5 w-2.5 text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
@@ -217,7 +441,7 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
                 </td>
               </tr>
             ) : (
-              overtimeRecords.map(record => {
+              overtimeRecords.map((record, idx) => {
                 const otHoursStr = typeof record.overtimeHours === 'number'
                   ? `${String(record.overtimeHours).padStart(2, '0')}h 00m`
                   : record.overtimeHours;
@@ -228,37 +452,43 @@ export const OvertimeTable: React.FC<OvertimeTableProps> = ({ records }) => {
                   <tr
                     key={record.id}
                     id={`overtime-row-${record.id}`}
-                    className="hover:bg-slate-50/60 transition-colors"
+                    className={`hover:bg-slate-100/70 transition-colors ${
+                      idx % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'
+                    }`}
                   >
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3">
                       <div className="font-semibold text-slate-900">{record.employeeName}</div>
                       <div className="text-[10px] text-slate-400 font-mono">{record.employeeId} • {record.department}</div>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-700 font-medium">
+                    <td className="px-4 py-3 text-slate-700 font-semibold whitespace-nowrap">
                       {record.date}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-700">
+                    <td className="px-4 py-3 text-slate-700 font-medium">
                       {record.shift}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-800 font-medium">
+                    <td className="px-4 py-3 text-slate-800 font-bold font-mono">
                       {record.inTime}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-800 font-medium">
+                    <td className="px-4 py-3 text-slate-800 font-mono">
                       {record.outTime || '--:--'}
                     </td>
-                    <td className="px-4 py-2.5 font-semibold text-slate-900">
-                      {record.workHours}
+                    <td className="px-4 py-3 font-semibold text-slate-900">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-semibold text-xs border border-slate-200">
+                        {record.workHours}
+                      </span>
                     </td>
-                    <td className="px-4 py-2.5">
-                      <span className="inline-flex items-center rounded bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 border border-amber-200 text-xs">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 border border-amber-200 text-xs">
                         {otHoursStr}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-700 font-medium">
+                    <td className="px-4 py-3 text-slate-700 font-medium">
                       ₹{otRate}/hr
                     </td>
-                    <td className="px-4 py-2.5 text-right font-bold text-slate-900">
-                      ₹{otAmt.toFixed(0)}
+                    <td className="px-4 py-3 text-right font-bold text-emerald-700">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200">
+                        ₹{otAmt.toFixed(0)}
+                      </span>
                     </td>
                   </tr>
                 );

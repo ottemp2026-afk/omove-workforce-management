@@ -7,7 +7,12 @@ import {
   Calendar, 
   FileText, 
   Clock,
-  Users
+  Users,
+  User,
+  Briefcase,
+  Zap,
+  IndianRupee,
+  Activity
 } from 'lucide-react';
 import { parseDurationToMinutes, formatMinutesToHoursMinutes } from '../../utils/overtime';
 
@@ -272,14 +277,53 @@ export const ReportsPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-2.5">Employee</th>
-                <th className="px-4 py-2.5">Date</th>
-                <th className="px-4 py-2.5">Shift</th>
-                <th className="px-4 py-2.5">Work Hours</th>
-                <th className="px-4 py-2.5">OT Hours</th>
-                <th className="px-4 py-2.5">OT Pay</th>
-                <th className="px-4 py-2.5">Status</th>
+              <tr className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 text-slate-200 border-b-2 border-slate-800 text-[11px] font-bold uppercase tracking-wider select-none">
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <User className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="tracking-widest">EMPLOYEE</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="tracking-widest">DATE</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="tracking-widest">SHIFT</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <Clock className="h-3.5 w-3.5 text-indigo-300" />
+                    <span className="tracking-widest">WORK HOURS</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
+                      <Zap className="h-2.5 w-2.5" />
+                    </span>
+                    <span className="font-bold text-amber-400 tracking-widest">OT HOURS</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                      <IndianRupee className="h-2.5 w-2.5" />
+                    </span>
+                    <span className="font-bold text-emerald-400 tracking-widest">OT PAY</span>
+                  </div>
+                </th>
+                <th className="px-4 py-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <Activity className="h-3.5 w-3.5 text-sky-400" />
+                    <span className="tracking-widest">STATUS</span>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

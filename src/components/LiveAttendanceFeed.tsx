@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAttendance } from '../context/AttendanceContext';
 import { StatusBadge } from './StatusBadge';
-import { Fingerprint } from 'lucide-react';
+import { Fingerprint, User, Hash, Clock, Activity, CheckCircle2 } from 'lucide-react';
 
 interface LiveAttendanceFeedProps {
   onOpenScanModal?: () => void;
@@ -13,14 +13,15 @@ export const LiveAttendanceFeed: React.FC<LiveAttendanceFeedProps> = ({ onOpenSc
   return (
     <div
       id="live-attendance-section"
-      className="rounded-md border border-slate-200 bg-white overflow-hidden"
+      className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-xs"
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 p-4 bg-gradient-to-b from-white to-slate-50/50">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-slate-900">Live Biometric Feed</h3>
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">Live Biometric Feed</h3>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               ESP32 Stream
             </span>
           </div>
@@ -31,12 +32,12 @@ export const LiveAttendanceFeed: React.FC<LiveAttendanceFeedProps> = ({ onOpenSc
 
         {onOpenScanModal && (
           <button
-            id="live-feed-test-scan-btn"
+            id="feed-simulate-scan-button"
             type="button"
             onClick={onOpenScanModal}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs"
           >
-            <Fingerprint className="h-3.5 w-3.5 text-slate-500" />
+            <Fingerprint className="h-3.5 w-3.5 text-emerald-600" />
             <span>Simulate Scan</span>
           </button>
         )}
@@ -46,13 +47,45 @@ export const LiveAttendanceFeed: React.FC<LiveAttendanceFeedProps> = ({ onOpenSc
       <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              <th className="px-4 py-2.5">Employee</th>
-              <th className="px-4 py-2.5">Employee ID</th>
-              <th className="px-4 py-2.5">Fingerprint ID</th>
-              <th className="px-4 py-2.5">Scan Time</th>
-              <th className="px-4 py-2.5">Action</th>
-              <th className="px-4 py-2.5">Status</th>
+            <tr className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 text-slate-200 border-b-2 border-slate-800 text-[11px] font-bold uppercase tracking-wider select-none">
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <User className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">EMPLOYEE</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Hash className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">EMPLOYEE ID</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                    <Fingerprint className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-emerald-400 tracking-widest">FINGERPRINT ID</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Clock className="h-3.5 w-3.5 text-indigo-300" />
+                  <span className="tracking-widest">SCAN TIME</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Activity className="h-3.5 w-3.5 text-amber-400" />
+                  <span className="tracking-widest">ACTION</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-sky-400" />
+                  <span className="tracking-widest">STATUS</span>
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">

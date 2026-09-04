@@ -10,7 +10,15 @@ import {
   Search, 
   Fingerprint, 
   Users,
-  UserCheck
+  UserCheck,
+  User,
+  Building2,
+  Briefcase,
+  Clock,
+  IndianRupee,
+  Activity,
+  SlidersHorizontal,
+  Hash
 } from 'lucide-react';
 import { Modal } from './Modal';
 
@@ -134,16 +142,63 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-              <th className="px-4 py-2.5">Employee ID</th>
-              <th className="px-4 py-2.5">Name</th>
-              <th className="px-4 py-2.5">Department</th>
-              <th className="px-4 py-2.5">Designation</th>
-              <th className="px-4 py-2.5">Shift</th>
-              <th className="px-4 py-2.5">Fingerprint ID</th>
-              <th className="px-4 py-2.5">Overtime Rate</th>
-              <th className="px-4 py-2.5">Status</th>
-              <th className="px-4 py-2.5 text-right">Actions</th>
+            <tr className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 text-slate-200 border-b-2 border-slate-800 text-[11px] font-bold uppercase tracking-wider select-none">
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Hash className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">EMPLOYEE ID</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <User className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">NAME</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">DEPARTMENT</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">DESIGNATION</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Clock className="h-3.5 w-3.5 text-indigo-300" />
+                  <span className="tracking-widest">SHIFT</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                    <Fingerprint className="h-2.5 w-2.5" />
+                  </span>
+                  <span className="font-bold text-emerald-400 tracking-widest">FINGERPRINT ID</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <IndianRupee className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="tracking-widest">OVERTIME RATE</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 whitespace-nowrap">
+                <div className="flex items-center gap-1.5 text-slate-200">
+                  <Activity className="h-3.5 w-3.5 text-sky-400" />
+                  <span className="tracking-widest">STATUS</span>
+                </div>
+              </th>
+              <th className="px-4 py-3.5 text-right whitespace-nowrap">
+                <div className="flex items-center justify-end gap-1.5 text-slate-200">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="tracking-widest">ACTIONS</span>
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
