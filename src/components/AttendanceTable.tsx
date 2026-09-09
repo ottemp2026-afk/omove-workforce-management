@@ -443,30 +443,42 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       <div className="divide-y divide-slate-100 md:hidden">
         {filteredRecords.length > 0 ? (
           filteredRecords.map(record => (
-            <div key={record.id} className="p-3.5 space-y-2 text-xs">
+            <div key={record.id} className="p-3.5 space-y-2 text-xs bg-white hover:bg-slate-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-medium text-slate-900">{record.date}</span>
-                  <span className="ml-2 text-slate-500 text-[11px]">{record.shift}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 text-xs">{record.date}</span>
+                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-200">{record.shift}</span>
+                  </div>
+                  {showEmployeeName && (
+                    <div className="text-[11px] font-semibold text-indigo-700 mt-0.5">
+                      {record.employeeName} ({record.employeeId})
+                    </div>
+                  )}
                 </div>
                 <StatusBadge status={record.status} size="sm" />
               </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-100">
-                <div>
-                  <span className="text-slate-400">IN / OUT: </span>
-                  <span className="font-medium text-slate-800">{record.inTime} – {record.outTime || '--:--'}</span>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-slate-100 font-mono">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400 font-sans">IN/OUT:</span>
+                  <span className="font-bold text-slate-800">{record.inTime} – {record.outTime || '--:--'}</span>
                 </div>
-                <div>
-                  <span className="text-slate-400">Hours: </span>
-                  <span className="font-semibold text-slate-900">{record.workHours}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400 font-sans">Hours:</span>
+                  <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">{record.workHours}</span>
                 </div>
-                <div>
-                  <span className="text-slate-400">OT: </span>
-                  <span className="font-medium text-slate-800">{record.overtimeHours}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400 font-sans">OT:</span>
+                  <span className={`font-semibold ${record.overtimeHours && record.overtimeHours !== '0h 00m' && record.overtimeHours !== 0 ? 'text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200' : 'text-slate-500'}`}>
+                    {record.overtimeHours || '--'}
+                  </span>
                 </div>
-                <div>
-                  <span className="text-slate-400">OT Pay: </span>
-                  <span className="font-semibold text-slate-900">₹{Number(record.otAmount || 0).toFixed(2)}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400 font-sans">OT Pay:</span>
+                  <span className="font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    ₹{Number(record.otAmount || 0).toFixed(0)}
+                  </span>
                 </div>
               </div>
             </div>

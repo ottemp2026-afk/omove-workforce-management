@@ -39,6 +39,8 @@ export const OvertimeManagement: React.FC = () => {
           subtitle="Cycle: September 2026"
           icon={DollarSign}
           highlight={true}
+          accentColor="emerald"
+          badge="PAYOUT"
         />
         <StatCard
           id="stat-ot-total-hours"
@@ -46,6 +48,8 @@ export const OvertimeManagement: React.FC = () => {
           value={totalOtHoursFormatted}
           subtitle="Complete 1-hour blocks only"
           icon={Clock}
+          accentColor="amber"
+          badge="HOURS"
         />
         <StatCard
           id="stat-ot-rate-avg"
@@ -53,6 +57,8 @@ export const OvertimeManagement: React.FC = () => {
           value="₹80 / hr"
           subtitle="Standard company multiplier"
           icon={Award}
+          accentColor="blue"
+          badge="RATE"
         />
         <StatCard
           id="stat-ot-qualifying-emp"
@@ -60,6 +66,8 @@ export const OvertimeManagement: React.FC = () => {
           value={`${overtimeRecords.length} records`}
           subtitle="Clocked overtime attendance"
           icon={Users}
+          accentColor="purple"
+          badge="LOGS"
         />
       </div>
 

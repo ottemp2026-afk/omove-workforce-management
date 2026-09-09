@@ -183,39 +183,6 @@ export const BiometricScanModal: React.FC<BiometricScanModalProps> = ({ isOpen, 
               </select>
             </div>
 
-            {/* Type Toggle: WORK IN / WORK OUT */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Punch Type
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAction('WORK IN')}
-                  disabled={isScanning}
-                  className={`rounded-md border py-1.5 text-xs font-medium transition-colors ${
-                    action === 'WORK IN'
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  WORK IN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAction('WORK OUT')}
-                  disabled={isScanning}
-                  className={`rounded-md border py-1.5 text-xs font-medium transition-colors ${
-                    action === 'WORK OUT'
-                      ? 'border-slate-900 bg-slate-900 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  WORK OUT
-                </button>
-              </div>
-            </div>
-
             {/* Fingerprint Status Block */}
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">

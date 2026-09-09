@@ -223,6 +223,46 @@ export function getElapsedWorkTime(
 }
 
 /**
+ * Calculates the official shift start timestamp for an active shift.
+ * Counts worked time from the shift's official start time (e.g. "14:00" for Shift B) rather than 00:00:00 at punch-in.
+ * 
+ * @param shiftStartTime Shift start time string, e.g. "14:00", "06:00", "22:00"
+ * @param nowTimestamp Current timestamp in milliseconds (defaults to Date.now())
+ * @param actualInTimestamp Optional actual check-in timestamp
+ */
+export function getShiftStartTimestamp(
+  shiftStartTime?: string,
+  nowTimestamp: number = Date.now(),
+  actualInTimestamp?: number
+): number {
+  if (!shiftStartTime || shiftStartTime === '--:--') {
+    return actualInTimestamp || nowTimestamp;
+  }
+
+  const now = new Date(nowTimestamp);
+  const clean = shiftStartTime.trim().replace(/[^\d:]/g, '');
+  const parts = clean.split(':');
+  let shiftHours = parseInt(parts[0] || '0', 10);
+  const shiftMinutes = parseInt(parts[1] || '0', 10);
+
+  // Handle 12-hour AM/PM if present in string
+  const upper = shiftStartTime.toUpperCase();
+  if (upper.includes('PM') && shiftHours < 12) shiftHours += 12;
+  if (upper.includes('AM') && shiftHours === 12) shiftHours = 0;
+
+  // Construct shift start date on today's calendar date
+  const shiftDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), shiftHours, shiftMinutes, 0, 0);
+
+  // Overnight shift handling:
+  // If shiftDate is more than 2 hours in the future (e.g. night shift starts at 22:00, but current time is 04:00 AM next day)
+  if (shiftDate.getTime() - nowTimestamp > 2 * 3600 * 1000) {
+    shiftDate.setDate(shiftDate.getDate() - 1);
+  }
+
+  return shiftDate.getTime();
+}
+
+/**
  * Reconstructs a timestamp from an attendance record's date and inTime strings,
  * with awareness of overnight shifts and flexible date/time formats.
  */
@@ -283,3 +323,22 @@ export function parseDateTimeToTimestamp(dateStr?: string, timeStr?: string): nu
   return baseDate.getTime();
 }
 
+/**
+ * Converts 24-hour time string like "14:00", "06:00", "22:00" to 12-hour AM/PM format like "02:00 PM", "06:00 AM", "10:00 PM".
+ * If already in 12-hour format or invalid, returns cleanly.
+ */
+export function formatTo12Hour(timeStr?: string): string {
+  if (!timeStr || timeStr === '--:--') return '--:--';
+  const trimmed = timeStr.trim();
+  if (trimmed.toUpperCase().includes('AM') || trimmed.toUpperCase().includes('PM')) {
+    return trimmed;
+  }
+  const parts = trimmed.split(':');
+  if (parts.length < 2) return timeStr;
+  let h = parseInt(parts[0], 10);
+  const m = parts[1].replace(/[^\d]/g, '').padStart(2, '0');
+  if (isNaN(h)) return timeStr;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+}

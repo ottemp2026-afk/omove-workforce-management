@@ -4,6 +4,7 @@ import {
   Shift, 
   AttendanceRecord, 
   LiveBiometricActivity, 
+  LivePunchAlert,
   HardwareStatus, 
   WorkStatus 
 } from '../types';
@@ -19,6 +20,7 @@ import {
   computeMinutesBetweenTimes,
   parseDateTimeToTimestamp,
 } from '../utils/overtime';
+import { playPunchChime } from '../utils/soundEffects';
 import { db, auth } from '../firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { 
@@ -69,6 +71,11 @@ interface AttendanceContextType {
   toasts: ToastMessage[];
   addToast: (toast: Omit<ToastMessage, 'id'>) => void;
   removeToast: (id: string) => void;
+
+  // Live Punch Pop-up (5-Second Admin Alert)
+  livePunchAlert: LivePunchAlert | null;
+  triggerLivePunchAlert: (alert: LivePunchAlert) => void;
+  dismissLivePunchAlert: () => void;
 }
 
 const AttendanceContext = createContext<AttendanceContextType | undefined>(undefined);
@@ -125,6 +132,32 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Live Punch Alert Pop-up state (5 seconds display for Admin Panel)
+  const [livePunchAlert, setLivePunchAlert] = useState<LivePunchAlert | null>(null);
+  const livePunchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const dismissLivePunchAlert = () => {
+    if (livePunchTimerRef.current) {
+      clearTimeout(livePunchTimerRef.current);
+      livePunchTimerRef.current = null;
+    }
+    setLivePunchAlert(null);
+  };
+
+  const triggerLivePunchAlert = (alert: LivePunchAlert) => {
+    if (livePunchTimerRef.current) {
+      clearTimeout(livePunchTimerRef.current);
+    }
+    setLivePunchAlert(alert);
+    playPunchChime(alert.action);
+
+    // Stay for exactly 5 seconds (5000ms)
+    livePunchTimerRef.current = setTimeout(() => {
+      setLivePunchAlert(null);
+      livePunchTimerRef.current = null;
+    }, 5000);
   };
 
   // Helper to resolve shift display name
@@ -255,6 +288,9 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [authUser]);
 
+  // Track initial load so alert popup only fires on new incoming punch events
+  const initialAttendanceLoadedRef = useRef(false);
+
   // 3. Subscribe to Firestore `attendance` collection
   useEffect(() => {
     try {
@@ -262,6 +298,47 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const unsubscribe = onSnapshot(attendanceCol, (snapshot) => {
         setIsFirebaseConnected(true);
         setFirestoreError(null);
+
+        // Check for real-time changes after initial fetch
+        if (!initialAttendanceLoadedRef.current) {
+          initialAttendanceLoadedRef.current = true;
+        } else {
+          snapshot.docChanges().forEach(change => {
+            const data = change.doc.data();
+            if (change.type === 'added') {
+              triggerLivePunchAlert({
+                id: `ALERT-${change.doc.id}`,
+                employeeId: data.employeeId || 'EMP',
+                employeeName: data.employeeName || 'Staff Member',
+                department: data.department || 'Operations',
+                fingerprintId: Number(data.fingerprintId || 1),
+                action: 'WORK IN',
+                time: data.inTime || getFormattedCurrentTime(),
+                date: data.date || getTodayDateStr(),
+                matchScore: data.biometricMatchScore || 99.4,
+                shift: resolveShiftName(data.shiftId),
+                timestamp: Date.now(),
+              });
+            } else if (change.type === 'modified' && data.status === 'Completed' && data.outTime && data.outTime !== '--:--') {
+              triggerLivePunchAlert({
+                id: `ALERT-${change.doc.id}`,
+                employeeId: data.employeeId || 'EMP',
+                employeeName: data.employeeName || 'Staff Member',
+                department: data.department || 'Operations',
+                fingerprintId: Number(data.fingerprintId || 1),
+                action: 'WORK OUT',
+                time: data.outTime || getFormattedCurrentTime(),
+                date: data.date || getTodayDateStr(),
+                matchScore: data.biometricMatchScore || 99.4,
+                shift: resolveShiftName(data.shiftId),
+                workHours: data.workHours,
+                overtimeHours: data.overtimeHours,
+                overtimeAmount: data.overtimeAmount,
+                timestamp: Date.now(),
+              });
+            }
+          });
+        }
         if (!snapshot.empty) {
           const loadedRecords: AttendanceRecord[] = snapshot.docs.map((d) => {
             const data = d.data();
@@ -695,7 +772,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const inTimestamp: number = recordToClose?.inTimestamp || (nowTs - 8 * 3600 * 1000);
       const inTimeStr = recordToClose?.inTime && recordToClose.inTime !== '--:--' ? recordToClose.inTime : '06:00 AM';
 
-      // Total work calculation
+      // Total work calculation from punch-in timestamp
       const elapsedMs = Math.max(0, nowTs - inTimestamp);
       const totalWorkMinutes = Math.max(1, Math.floor(elapsedMs / (1000 * 60)));
 
@@ -750,6 +827,23 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         message: `${emp.name} (${empId}) WORK OUT at ${scanTimeStr}. Worked: ${totalWorkHoursFormatted}. OT: ${otHours}h complete block (₹${otAmount.toFixed(0)}).`,
       });
 
+      triggerLivePunchAlert({
+        id: `ALERT-${Date.now()}`,
+        employeeId: empId,
+        employeeName: emp.name,
+        department: emp.department,
+        fingerprintId: Number(emp.fingerprintId),
+        action: 'WORK OUT',
+        time: scanTimeStr,
+        date: todayDate,
+        matchScore: 99.4,
+        shift: resolveShiftName(emp.shiftId),
+        workHours: totalWorkHoursFormatted,
+        overtimeHours: otHours,
+        overtimeAmount: otAmount,
+        timestamp: nowTs,
+      });
+
     } else {
       // 5. WORK IN Flow: Create new attendance document
       // Use auto-generated document ID in attendance collection
@@ -786,6 +880,20 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         title: '✓ Attendance recorded',
         message: `${emp.name} (${empId}) WORK IN at ${scanTimeStr}. Live working timer initiated.`,
       });
+
+      triggerLivePunchAlert({
+        id: `ALERT-${Date.now()}`,
+        employeeId: empId,
+        employeeName: emp.name,
+        department: emp.department,
+        fingerprintId: Number(emp.fingerprintId),
+        action: 'WORK IN',
+        time: scanTimeStr,
+        date: todayDate,
+        matchScore: 99.4,
+        shift: resolveShiftName(emp.shiftId),
+        timestamp: nowTs,
+      });
     }
   };
 
@@ -816,6 +924,9 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         toasts,
         addToast,
         removeToast,
+        livePunchAlert,
+        triggerLivePunchAlert,
+        dismissLivePunchAlert,
       }}
     >
       {children}

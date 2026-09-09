@@ -64,7 +64,6 @@ export interface AdminUser {
 }
 
 export interface LiveBiometricActivity {
-
   id: string;
   employeeId: string;
   employeeName: string;
@@ -75,6 +74,23 @@ export interface LiveBiometricActivity {
   status: 'Active' | 'Completed';
   sensorId: string;
   matchScore: number;
+}
+
+export interface LivePunchAlert {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  fingerprintId: number;
+  action: 'WORK IN' | 'WORK OUT';
+  time: string;
+  date: string;
+  matchScore: number;
+  shift?: string;
+  workHours?: string;
+  overtimeHours?: number | string;
+  overtimeAmount?: number;
+  timestamp: number;
 }
 
 export interface HardwareStatus {
@@ -90,7 +106,9 @@ export interface HardwareStatus {
 
 export type AppRoute = 
   | '/'
+  | '/live-ledger'
   | '/attendance'
+  | '/subscription'
   | '/contact'
   | '/admin'
   | '/admin/employees'

@@ -5,13 +5,17 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
+import { LivePunchPopup } from './components/LivePunchPopup';
 import { BiometricScanModal } from './components/BiometricScanModal';
 import { AdminLogin } from './components/AdminLogin';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { AppRoute } from './types';
 
 // Pages
 import { EmployeePortal } from './pages/EmployeePortal';
+import { LiveLedgerPage } from './pages/LiveLedgerPage';
 import { EmployeeAttendance } from './pages/EmployeeAttendance';
+import { SubscriptionPage } from './pages/SubscriptionPage';
 import { ContactDeveloper } from './pages/ContactDeveloper';
 
 // Admin Pages
@@ -61,7 +65,6 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
         <Navbar
           currentRoute={currentRoute}
           navigate={navigate}
-          onOpenScanModal={onOpenScanModal}
         />
         <main className="flex-1 flex items-center justify-center p-4">
           <AdminLogin navigate={navigate} />
@@ -92,7 +95,7 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
       {/* Admin Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Admin Top Navbar */}
-        <header className="sticky top-0 z-10 flex h-13 items-center justify-between border-b border-slate-200/90 bg-white/95 px-3 sm:px-5 lg:px-6 backdrop-blur-sm">
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200/90 bg-white/95 px-3 sm:px-5 lg:px-6 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
             <button
               type="button"
@@ -103,12 +106,18 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
             </button>
 
             {/* Breadcrumb / Current View title */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="font-semibold text-slate-400">Admin</span>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Command Center</span>
               <span className="text-slate-300">/</span>
-              <span className="font-bold text-slate-900 capitalize">
-                {currentRoute.replace('/admin/', '').replace('/admin', 'Dashboard')}
+              <span className="font-bold text-slate-900 capitalize tracking-tight text-sm">
+                {currentRoute.replace('/admin/', '').replace('/admin', 'Workforce Overview')}
               </span>
+            </div>
+
+            {/* Hardware Status Pill */}
+            <div className="hidden md:flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 text-[11px] font-mono text-emerald-800 ml-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold">ESP32 + R307S Online</span>
             </div>
           </div>
 
@@ -116,19 +125,19 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
             <button
               type="button"
               onClick={onOpenScanModal}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-50/70 px-3 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100/80 transition-all shadow-2xs active:scale-95"
             >
               <Fingerprint className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="hidden sm:inline">Biometric Scanner</span>
+              <span className="hidden sm:inline">Biometric Terminal</span>
             </button>
 
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs active:scale-95"
             >
               <User className="h-3.5 w-3.5 text-slate-500" />
-              <span>Employee Portal</span>
+              <span>Employee View</span>
             </button>
           </div>
         </header>
@@ -150,7 +159,9 @@ export default function App() {
     const path = window.location.pathname as AppRoute;
     const validRoutes: AppRoute[] = [
       '/',
+      '/live-ledger',
       '/attendance',
+      '/subscription',
       '/contact',
       '/admin',
       '/admin/employees',
@@ -191,9 +202,13 @@ export default function App() {
   const renderCurrentPage = () => {
     switch (currentRoute) {
       case '/':
-        return <EmployeePortal navigate={navigate} onOpenScanModal={() => setIsScanModalOpen(true)} />;
+        return <EmployeePortal navigate={navigate} />;
+      case '/live-ledger':
+        return <LiveLedgerPage navigate={navigate} onOpenScanModal={() => setIsScanModalOpen(true)} />;
       case '/attendance':
         return <EmployeeAttendance navigate={navigate} />;
+      case '/subscription':
+        return <SubscriptionPage navigate={navigate} />;
       case '/contact':
         return <ContactDeveloper />;
       case '/admin':
@@ -211,7 +226,7 @@ export default function App() {
       case '/admin/settings':
         return <SettingsPage />;
       default:
-        return <EmployeePortal navigate={navigate} onOpenScanModal={() => setIsScanModalOpen(true)} />;
+        return <EmployeePortal navigate={navigate} />;
     }
   };
 
@@ -231,23 +246,24 @@ export default function App() {
             />
           ) : (
             /* ================= PUBLIC / EMPLOYEE VIEW LAYOUT ================= */
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen flex-col pb-16 md:pb-0">
               <Navbar
                 currentRoute={currentRoute}
                 navigate={navigate}
-                onOpenScanModal={() => setIsScanModalOpen(true)}
               />
 
-              <main className="flex-1 px-3.5 sm:px-5 lg:px-6 py-4 sm:py-6 max-w-7xl w-full mx-auto">
+              <main className="flex-1 px-3 sm:px-5 lg:px-6 py-3.5 sm:py-6 max-w-7xl w-full mx-auto">
                 {renderCurrentPage()}
               </main>
 
               <Footer />
+              <MobileBottomNav currentRoute={currentRoute} navigate={navigate} />
             </div>
           )}
 
           {/* Global Components */}
           <ToastContainer />
+          <LivePunchPopup />
           <BiometricScanModal
             isOpen={isScanModalOpen}
             onClose={() => setIsScanModalOpen(false)}

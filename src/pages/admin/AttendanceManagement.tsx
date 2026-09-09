@@ -40,6 +40,8 @@ export const AttendanceManagement: React.FC = () => {
           value={attendanceRecords.length}
           subtitle="Indexed in Firestore attendance"
           icon={CalendarCheck}
+          accentColor="blue"
+          badge="LEDGER"
         />
         <StatCard
           id="stat-records-completed"
@@ -48,6 +50,8 @@ export const AttendanceManagement: React.FC = () => {
           subtitle="Both Clock-In & Clock-Out captured"
           icon={CheckCircle2}
           highlight={true}
+          accentColor="emerald"
+          badge="CONFIRMED"
         />
         <StatCard
           id="stat-records-avg-work"
@@ -55,6 +59,8 @@ export const AttendanceManagement: React.FC = () => {
           value={avgWorkTimeFormatted}
           subtitle="Calculated from completed records"
           icon={Clock}
+          accentColor="purple"
+          badge="AVERAGE"
         />
         <StatCard
           id="stat-records-total-emp"
@@ -62,6 +68,8 @@ export const AttendanceManagement: React.FC = () => {
           value={employees.filter(e => e.active !== false).length}
           subtitle="Active registered employees"
           icon={Users}
+          accentColor="cyan"
+          badge="STAFF"
         />
       </div>
 
