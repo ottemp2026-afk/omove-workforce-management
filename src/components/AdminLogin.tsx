@@ -176,25 +176,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ navigate }) => {
               )}
             </button>
 
-            {/* Quick Demo Credentials Helper */}
-            <div className="rounded-xl border border-slate-200/90 bg-slate-50/90 p-3 text-[11px] text-slate-600 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-slate-800">Admin Account: </span>
-                <span className="font-mono font-medium text-slate-700">admin@omove.in</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@omove.in');
-                  setPassword('Admin@123456');
-                  if (error) clearError();
-                }}
-                className="rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-800 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all shadow-2xs cursor-pointer"
-              >
-                Auto-Fill
-              </button>
-            </div>
-
             <p className="text-[10.5px] text-slate-400 text-center pt-0.5">
               Strictly restricted to authorized administrative personnel.
             </p>
