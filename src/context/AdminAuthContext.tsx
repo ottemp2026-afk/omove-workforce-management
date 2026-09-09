@@ -30,7 +30,18 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [adminProfile, setAdminProfile] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState<boolean>(() => {
+    return sessionStorage.getItem('omove_admin_session_unlocked') === 'true';
+  });
   const isExplicitLogout = useRef<boolean>(false);
+
+  // Require explicit login on fresh session
+  useEffect(() => {
+    if (sessionStorage.getItem('omove_admin_session_unlocked') !== 'true') {
+      signOut(auth).catch(() => {});
+      setIsAdminUnlocked(false);
+    }
+  }, []);
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
@@ -70,15 +81,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           unsubscribeProfile = null;
         }
         setAdminProfile(null);
-        if (!isExplicitLogout.current) {
-          // Auto-authenticate with workspace credentials so Firestore sync is always active
-          signInWithEmailAndPassword(auth, 'admin@omove.in', 'Admin@123456').catch((err) => {
-            console.warn('Auto-auth notice:', err);
-            setIsLoading(false);
-          });
-        } else {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     });
 
@@ -122,6 +125,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         role: data.role,
         active: Boolean(data.active),
       });
+
+      // Mark session as unlocked
+      sessionStorage.setItem('omove_admin_session_unlocked', 'true');
+      setIsAdminUnlocked(true);
       setIsLoading(false);
       return true;
     } catch (err: unknown) {
@@ -190,6 +197,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const logout = async () => {
     isExplicitLogout.current = true;
+    sessionStorage.removeItem('omove_admin_session_unlocked');
+    setIsAdminUnlocked(false);
     await signOut(auth);
     setAdminProfile(null);
     setCurrentUser(null);
@@ -199,6 +208,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const clearError = () => setError(null);
 
   const isAdmin = Boolean(
+    isAdminUnlocked &&
     currentUser && 
     adminProfile && 
     adminProfile.role === 'admin' && 

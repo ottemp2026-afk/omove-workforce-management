@@ -27,7 +27,7 @@ import { OvertimeManagement } from './pages/admin/OvertimeManagement';
 import { ReportsPage } from './pages/admin/ReportsPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 
-import { Menu, X, Fingerprint, User, Loader2 } from 'lucide-react';
+import { Menu, X, Fingerprint, User, Loader2, Lock } from 'lucide-react';
 
 interface AdminRouteGuardProps {
   currentRoute: AppRoute;
@@ -46,7 +46,7 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
   onOpenScanModal,
   renderCurrentPage,
 }) => {
-  const { isAdmin, isLoading } = useAdminAuth();
+  const { isAdmin, isLoading, logout } = useAdminAuth();
 
   if (isLoading) {
     return (
@@ -134,10 +134,24 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs active:scale-95 cursor-pointer"
             >
               <User className="h-3.5 w-3.5 text-slate-500" />
               <span>Employee View</span>
+            </button>
+
+            <button
+              id="admin-header-lock-btn"
+              type="button"
+              onClick={async () => {
+                await logout();
+                navigate('/');
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200/90 bg-rose-50/80 hover:bg-rose-100/90 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors shadow-2xs cursor-pointer active:scale-95"
+              title="Lock Admin Panel & Sign Out"
+            >
+              <Lock className="h-3.5 w-3.5 text-rose-600" />
+              <span className="hidden sm:inline">Lock Admin</span>
             </button>
           </div>
         </header>
